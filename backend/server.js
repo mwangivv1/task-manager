@@ -9,8 +9,11 @@ app.get('/', (req, res) => {
     res.send("API is running...");
 });
 
-// Connect your Auth Routes
+// Existing Registration Route
 app.use('/api/auth', require('./routes/auth'));
+
+// New Login Route
+app.use('/api/login', require('./routes/login'));
 
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
