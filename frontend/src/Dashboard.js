@@ -1,58 +1,21 @@
-import React, { useEffect, useState } from "react";
-import API from "./api";
+import { useNavigate } from "react-router-dom";
 
 function Dashboard() {
-  const [tasks, setTasks] = useState([]);
-  const [title, setTitle] = useState("");
+  const navigate = useNavigate();
+  // ... rest of state
 
-  const token = localStorage.getItem("token");
-
+  // Simplified fetch using your api.js interceptor
   const fetchTasks = async () => {
-    const res = await API.get("/tasks", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await API.get("/tasks"); 
     setTasks(res.data);
   };
 
-  const createTask = async () => {
-    await API.post(
-      "/tasks",
-      { title },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    setTitle("");
-    fetchTasks();
-  };
-
-  useEffect(() => {
-    fetchTasks();
-  }, []);
+  // ... rest of code
 
   return (
-    <div>
-      <h2>Dashboard</h2>
-
-      <input
-        placeholder="New Task"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-      />
-      <button onClick={createTask}>Add Task</button>
-
-      <hr />
-
-      {tasks.map((task) => (
-        <div key={task._id}>
-          <p
-            onClick={() => (window.location.href = `/task/${task._id}`)}
-            style={{ cursor: "pointer" }}
-          >
-            {task.title}
-          </p>
-        </div>
-      ))}
-    </div>
+    // ...
+    <p onClick={() => navigate(`/task/${task._id}`)} style={{ cursor: "pointer" }}>
+      {task.title}
+    </p>
   );
 }
-
-export default Dashboard;
