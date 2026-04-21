@@ -69,4 +69,16 @@ router.get('/user', auth, async (req, res) => {
     }
 });
 
+// @route    GET api/auth/users
+// @desc     Get all users for assignment dropdown
+router.get('/users', auth, async (req, res) => {
+    try {
+        // Only return usernames and IDs for security
+        const users = await User.find().select('username _id');
+        res.json(users);
+    } catch (err) {
+        res.status(500).send('Server Error');
+    }
+});
+
 module.exports = router;

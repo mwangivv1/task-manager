@@ -109,4 +109,27 @@ router.post('/comment/:id', auth, async (req, res) => {
     }
 });
 
+// @route    PUT api/tasks/:id/assign
+// @desc     Assign a user to a task
+router.put('/:id/assign', auth, async (req, res) => {
+    try {
+        const { userId } = req.body;
+        const task = await Task.findById(req.params.id);
+
+        if (!task) return res.status(404).json({ msg: 'Task not found' });
+
+        // Add the user to the array (prevents duplicates automatically)
+        task.assignedTo.addToSet(userId);
+
+        await task.save();
+        
+        // Populate the usernames so the frontend can display them immediately
+        const updatedTask = await Task.findById(req.params.id).populate('assignedTo', 'username');
+        res.json(updatedTask);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
 module.exports = router;
