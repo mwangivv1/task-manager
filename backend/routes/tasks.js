@@ -1,101 +1,84 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const Task = require("../models/Task");
-const auth = require("../middleware/auth"); // Protects the routes
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+const auth = require('../middleware/auth');
 
-// 1. CREATE a Task
-router.post("/", auth, async (req, res) => {
-  try {
-    const newTask = new Task({
-      title: req.body.title,
-      description: req.body.description,
-      user: req.user.id, // ID from JWT middleware
-    });
-    const task = await newTask.save();
-    res.json(task);
-  } catch (err) {
-    res.status(500).json({ msg: "Server Error" });
-  }
-});
+// @route    POST api/auth/register
+// @desc     Register a user
+router.post('/register', async (req, res) => {
+    const { username, email, password } = req.body;
 
-// 2. READ (Get all tasks for the logged-in user)
-router.get("/", auth, async (req, res) => {
-  try {
-    const tasks = await Task.find({ user: req.user.id }).sort({ createdAt: -1 });
-    res.json(tasks);
-  } catch (err) {
-    res.status(500).json({ msg: "Server Error" });
-  }
-});
-
-// 3. UPDATE (Change status or title)
-router.put("/:id", auth, async (req, res) => {
-  try {
-    let task = await Task.findById(req.params.id);
-    if (!task) return res.status(404).json({ msg: "Task not found" });
-
-    // Ensure the user owns this task
-    if (task.user.toString() !== req.user.id) {
-      return res.status(401).json({ msg: "Not authorized" });
+    // Simple Validation
+    if (!username || !email || !password) {
+        return res.status(400).json({ msg: 'Please enter all fields' });
     }
 
-    task = await Task.findByIdAndUpdate(
-      req.params.id,
-      { $set: req.body },
-      { new: true }
-    );
-    res.json(task);
-  } catch (err) {
-    res.status(500).json({ msg: "Server Error" });
-  }
+    try {
+        let user = await User.findOne({ email });
+        if (user) return res.status(400).json({ msg: 'User already exists' });
+
+        user = new User({ username, email, password });
+
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(password, salt);
+
+        await user.save();
+
+        const payload = { user: { id: user.id } };
+        
+        jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 36000 }, (err, token) => {
+            if (err) throw err;
+            res.json({ token, user: { id: user.id, username, email } });
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
 });
 
-// 4. DELETE
-router.delete("/:id", auth, async (req, res) => {
-  try {
-    const task = await Task.findById(req.params.id);
-    if (!task) return res.status(404).json({ msg: "Task not found" });
+// @route    POST api/auth/login
+// @desc     Authenticate user & get token
+router.post('/login', async (req, res) => {
+    const { email, password } = req.body;
 
-    if (task.user.toString() !== req.user.id) {
-      return res.status(401).json({ msg: "Not authorized" });
+    if (!email || !password) {
+        return res.status(400).json({ msg: 'Please enter all fields' });
     }
 
-    await Task.findByIdAndDelete(req.params.id);
-    res.json({ msg: "Task removed" });
-  } catch (err) {
-    res.status(500).json({ msg: "Server Error" });
-  }
+    try {
+        let user = await User.findOne({ email });
+        if (!user) return res.status(400).json({ msg: 'Invalid Credentials' });
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) return res.status(400).json({ msg: 'Invalid Credentials' });
+
+        const payload = { user: { id: user.id } };
+
+        jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 36000 }, (err, token) => {
+            if (err) throw err;
+            res.json({ 
+                token, 
+                user: { id: user.id, username: user.username, email: user.email } 
+            });
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
 });
 
-// POST: Add a comment to a specific task
-router.post("/:id/comments", auth, async (req, res) => {
-  try {
-    const task = await Task.findById(req.params.id);
-    if (!task) return res.status(404).json({ msg: "Task not found" });
-
-    const newComment = {
-      text: req.body.text,
-      // createdAt is handled by the default value in your schema
-    };
-
-    task.comments.unshift(newComment); // Add to the beginning of the array
-    await task.save();
-    
-    res.json(task.comments); // Return the updated comments list
-  } catch (err) {
-    res.status(500).send("Server Error");
-  }
-});
-
-// GET a specific task by ID
-router.get("/:id", auth, async (req, res) => {
-  try {
-    const task = await Task.findById(req.params.id);
-    if (!task) return res.status(404).json({ msg: "Task not found" });
-    res.json(task);
-  } catch (err) {
-    res.status(500).send("Server Error");
-  }
+// @route    GET api/auth/user
+// @desc     Get logged in user data
+router.get('/user', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select('-password');
+        res.json(user);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
 });
 
 module.exports = router;
