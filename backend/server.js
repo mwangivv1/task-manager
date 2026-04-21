@@ -1,38 +1,22 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const cors = require('cors'); // 1. Import CORS
 
-// Load environment variables from .env
 dotenv.config();
 
 const app = express();
 
-// Middleware to read JSON (Crucial for Auth!)
+// 2. Middleware setup
+app.use(cors()); // Enable CORS for all origins (or configure as needed)
 app.use(express.json());
 
-// MongoDB Connection Logic
-const connectDB = async () => {
-    try {
-        await mongoose.connect(process.env.MONGO_URI);
-        console.log('MongoDB Connected Successfully ✅');
-    } catch (err) {
-        console.error('Database Connection Failed ❌', err.message);
-        process.exit(1); // Exit process with failure
-    }
-};
+// MongoDB Connection (Keep your existing logic here)
+// ...
 
-// Call the connection function
-connectDB();
-
-// Main route for testing
-app.get('/', (req, res) => {
-    res.send("API is running...");
-});
-
-// Routes
+// 3. Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/login', require('./routes/login'));
 
-// Use PORT from .env or default to 5000
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Server Listen (Keep existing logic)
+// ...
