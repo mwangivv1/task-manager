@@ -17,6 +17,7 @@ app.use(express.json());
 // 3. Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/login', require('./routes/login'));
+app.use("/api/tasks", require("./routes/tasks"));
 
 // Server Listen (Keep existing logic)
 // ...

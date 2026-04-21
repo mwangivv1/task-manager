@@ -1,17 +1,16 @@
 import React, { useEffect, useState, useCallback } from "react";
-import API from "./api"; // This already handles your tokens!
-import { useParams } from "react-router-dom";
+import API from "./api"; 
+import { useParams, useNavigate } from "react-router-dom";
 
 function Task() {
   const { id } = useParams();
+  const navigate = useNavigate(); // Added for navigation
   const [task, setTask] = useState(null);
   const [comment, setComment] = useState("");
   const [error, setError] = useState(null);
 
-  // Wrapped in useCallback to prevent unnecessary re-renders
   const fetchTask = useCallback(async () => {
     try {
-      // No need for manual headers; the interceptor does the work
       const res = await API.get(`/tasks/${id}`); 
       setTask(res.data);
     } catch (err) {
@@ -21,12 +20,15 @@ function Task() {
   }, [id]);
 
   const addComment = async () => {
-    if (!comment.trim()) return; // Don't send empty comments
+    if (!comment.trim()) return; 
 
     try {
-      await API.post(`/tasks/${id}/comments`, { text: comment });
+      // Logic: Backend returns the updated comments array
+      const res = await API.post(`/tasks/${id}/comments`, { text: comment });
+      
+      // Optimization: Update the local task object's comments with the new data
+      setTask(prevTask => ({ ...prevTask, comments: res.data })); 
       setComment("");
-      fetchTask(); // Refresh the list
     } catch (err) {
       alert("Failed to add comment.");
     }
@@ -36,29 +38,45 @@ function Task() {
     fetchTask();
   }, [fetchTask]);
 
-  if (error) return <p style={{ color: "red" }}>{error}</p>;
+  if (error) return <div style={{ padding: "20px" }}><p style={{ color: "red" }}>{error}</p><button onClick={() => navigate("/dashboard")}>Back</button></div>;
   if (!task) return <p>Loading...</p>;
 
   return (
-    <div>
+    <div style={{ padding: "20px" }}>
+      <button onClick={() => navigate("/dashboard")} style={{ marginBottom: "10px" }}>
+        ← Back to Dashboard
+      </button>
+      
       <h2>{task.title}</h2>
-      <p>{task.description}</p>
+      <p style={{ background: "#f4f4f4", padding: "10px", borderRadius: "4px" }}>
+        {task.description || "No description provided."}
+      </p>
+
+      <hr />
 
       <h3>Comments</h3>
-      <div className="comments-list">
+      <div className="comments-list" style={{ marginBottom: "20px" }}>
         {task.comments && task.comments.length > 0 ? (
-          task.comments.map((c, i) => <p key={c._id || i}>{c.text}</p>)
+          task.comments.map((c) => (
+            <div key={c._id} style={{ borderBottom: "1px solid #eee", padding: "5px 0" }}>
+              <p style={{ margin: 0 }}>{c.text}</p>
+              <small style={{ color: "#999" }}>{new Date(c.createdAt).toLocaleString()}</small>
+            </div>
+          ))
         ) : (
           <p>No comments yet.</p>
         )}
       </div>
 
-      <input
-        placeholder="Write a comment..."
-        value={comment}
-        onChange={(e) => setComment(e.target.value)}
-      />
-      <button onClick={addComment}>Send</button>
+      <div style={{ display: "flex", gap: "10px" }}>
+        <input
+          placeholder="Write a comment..."
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          style={{ flex: 1, padding: "8px" }}
+        />
+        <button onClick={addComment} style={{ cursor: "pointer" }}>Send</button>
+      </div>
     </div>
   );
 }

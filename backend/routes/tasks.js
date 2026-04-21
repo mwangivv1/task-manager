@@ -67,4 +67,35 @@ router.delete("/:id", auth, async (req, res) => {
   }
 });
 
+// POST: Add a comment to a specific task
+router.post("/:id/comments", auth, async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ msg: "Task not found" });
+
+    const newComment = {
+      text: req.body.text,
+      // createdAt is handled by the default value in your schema
+    };
+
+    task.comments.unshift(newComment); // Add to the beginning of the array
+    await task.save();
+    
+    res.json(task.comments); // Return the updated comments list
+  } catch (err) {
+    res.status(500).send("Server Error");
+  }
+});
+
+// GET a specific task by ID
+router.get("/:id", auth, async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ msg: "Task not found" });
+    res.json(task);
+  } catch (err) {
+    res.status(500).send("Server Error");
+  }
+});
+
 module.exports = router;
