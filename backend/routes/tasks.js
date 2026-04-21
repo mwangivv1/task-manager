@@ -81,4 +81,32 @@ router.get('/user', auth, async (req, res) => {
     }
 });
 
+// @route    POST api/tasks/comment/:id
+// @desc     Add a comment to a task
+// @access   Private
+router.post('/comment/:id', auth, async (req, res) => {
+    try {
+        const task = await Task.findById(req.params.id);
+
+        if (!task) {
+            return res.status(404).json({ msg: 'Task not found' });
+        }
+
+        const newComment = {
+            text: req.body.text,
+            user: req.user.id, // From the auth middleware
+            createdAt: new Date()
+        };
+
+        // Use $push to add the comment to the array and $unshift to put it at the top
+        task.comments.unshift(newComment);
+
+        await task.save();
+        res.json(task.comments);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
 module.exports = router;
