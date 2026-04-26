@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+const Task = require('../models/Task');
 
 // @route    POST api/auth/register
 // @desc     Register a user
@@ -109,8 +110,53 @@ router.post('/comment/:id', auth, async (req, res) => {
     }
 });
 
+// @route    POST api/tasks
+// @desc     Create a new task
+// @access   Private
+router.post('/', auth, async (req, res) => {
+    const { title, description, status } = req.body;
+
+    // 1. Validation
+    if (!title) {
+        return res.status(400).json({ msg: 'Please include a title' });
+    }
+
+    try {
+        // 2. Create the new task document
+        const newTask = new Task({
+            title,
+            description,
+            status,
+            creator: req.user.id // This satisfies your 'required: true' schema field
+        });
+
+        // 3. Save to MongoDB Atlas
+        const task = await newTask.save();
+        
+        // 4. Send the new task back to React
+        res.json(task);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// @route    GET api/tasks
+// @desc     Get all tasks
+// @access   Private
+router.get('/', auth, async (req, res) => {
+    try {
+        const tasks = await Task.find().populate('creator', 'username').sort({ createdAt: -1 });
+        res.json(tasks);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
 // @route    PUT api/tasks/:id/assign
 // @desc     Assign a user to a task
+// @access   Private
 router.put('/:id/assign', auth, async (req, res) => {
     try {
         const { userId } = req.body;
@@ -118,12 +164,10 @@ router.put('/:id/assign', auth, async (req, res) => {
 
         if (!task) return res.status(404).json({ msg: 'Task not found' });
 
-        // Add the user to the array (prevents duplicates automatically)
+        // addToSet prevents duplicate assignments
         task.assignedTo.addToSet(userId);
-
         await task.save();
         
-        // Populate the usernames so the frontend can display them immediately
         const updatedTask = await Task.findById(req.params.id).populate('assignedTo', 'username');
         res.json(updatedTask);
     } catch (err) {
