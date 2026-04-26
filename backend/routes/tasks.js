@@ -153,23 +153,41 @@ router.get('/', auth, async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
-
-// @route    PUT api/tasks/:id/assign
-// @desc     Assign a user to a task
-// @access   Private
-router.put('/:id/assign', auth, async (req, res) => {
+// @route    PUT api/tasks/:id
+// @desc     Update task status
+router.put('/:id', auth, async (req, res) => {
     try {
-        const { userId } = req.body;
+        const { status } = req.body;
         const task = await Task.findById(req.params.id);
 
         if (!task) return res.status(404).json({ msg: 'Task not found' });
 
-        // addToSet prevents duplicate assignments
-        task.assignedTo.addToSet(userId);
+        // Update the status
+        task.status = status;
         await task.save();
-        
-        const updatedTask = await Task.findById(req.params.id).populate('assignedTo', 'username');
-        res.json(updatedTask);
+
+        res.json(task);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// @route    DELETE api/tasks/:id
+// @desc     Delete a task
+router.delete('/:id', auth, async (req, res) => {
+    try {
+        const task = await Task.findById(req.params.id);
+
+        if (!task) return res.status(404).json({ msg: 'Task not found' });
+
+        // Check if the user is the creator (Security check)
+        if (task.creator.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'User not authorized' });
+        }
+
+        await task.deleteOne();
+        res.json({ msg: 'Task removed' });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
