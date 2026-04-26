@@ -10,7 +10,7 @@ function Register() {
 
   const handleRegister = async () => {
     try {
-      await API.post("/auth/register", { name, email, password });
+      await API.post("/auth/register", { username: name, email, password });
       alert("Registered! Now login.");
       navigate("/"); 
     } catch (err) {
