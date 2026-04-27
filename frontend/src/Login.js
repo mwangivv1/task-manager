@@ -18,14 +18,17 @@ function Login() {
   };
 
   return (
-    <div>
-      <h2>Login</h2>
-      <input placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
-      <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
-      <button onClick={handleLogin}>Login</button>
-      <p onClick={() => navigate("/register")} style={{ cursor: "pointer", color: "blue" }}>
-        Go to Register
-      </p>
+    <div className="container">
+        <h2>Welcome Back 👋</h2>
+
+        <input placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
+        <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
+
+        <button onClick={handleLogin}>Login</button>
+
+        <p className="link" onClick={() => (window.location.href = "/register")}>
+        Create an account
+        </p>
     </div>
   );
 }

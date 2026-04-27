@@ -19,12 +19,17 @@ function Register() {
   };
 
   return (
-    <div>
-      <h2>Register</h2>
-      <input placeholder="Name" onChange={(e) => setName(e.target.value)} />
-      <input placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
-      <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
-      <button onClick={handleRegister}>Register</button>
+    <div className="container">
+        <h2>Create Account 🚀</h2>
+
+        <input placeholder="Name" onChange={(e) => setName(e.target.value)} />
+        <input placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
+        <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
+
+        <button onClick={handleRegister}>Register</button>
+        <p style={{ marginTop: "10px" }}>
+          Already have an account? <a href="/">Login here</a>
+        </p>
     </div>
   );
 }

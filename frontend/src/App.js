@@ -5,6 +5,7 @@ import Login from "./Login";
 import Register from "./Register";
 import Dashboard from "./Dashboard";
 import Task from "./Task";
+import "./style.css";
 
 function App() {
   return (

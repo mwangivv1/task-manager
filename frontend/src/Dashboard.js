@@ -98,6 +98,36 @@ function Dashboard() {
           </div>
         ))}
       </div>
+      <div className="dashboard">
+        <h2>📋 Your Tasks</h2>
+
+        <input
+          placeholder="New Task..."
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+        <button onClick={createTask}>Add</button>
+
+        <hr />
+
+        {tasks.map((task) => (
+          <div
+            key={task._id}
+            className="task"
+            onClick={() => (window.location.href = `/task/${task._id}`)}
+          >
+            {task.title}
+          </div>
+        ))}
+      </div>
+      <div style={{ marginTop: "20px" }}>
+        <button onClick={() => {
+          localStorage.removeItem("token");
+          navigate("/");
+        }}>
+          Logout
+        </button>
+      </div>
     </div>
   );
 }
